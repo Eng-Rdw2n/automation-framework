@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Assertion failures",
+    "traceRegex": "(?s).*AssertionError.*",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Locator failures",
+    "traceRegex": "(?s)^(?!.*AssertionError).*NoSuchElementException.*$",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Transient browser or network failures",
+    "traceRegex": "(?s)^(?!.*AssertionError).*(SocketTimeoutException|ConnectException|TimeoutException|StaleElementReferenceException|ElementClickInterceptedException).*$",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Permanent browser or automation failures",
+    "traceRegex": "(?s)^(?!.*(?:AssertionError|NoSuchElementException|SocketTimeoutException|ConnectException|TimeoutException|StaleElementReferenceException|ElementClickInterceptedException)).*(InvalidSelectorException|InvalidArgumentException|NoSuchSessionException|SessionNotCreatedException|WebDriverException).*$",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Other automation errors",
+    "traceRegex": "(?s)^(?!.*(?:AssertionError|NoSuchElementException|SocketTimeoutException|ConnectException|TimeoutException|StaleElementReferenceException|ElementClickInterceptedException|InvalidSelectorException|InvalidArgumentException|NoSuchSessionException|SessionNotCreatedException|WebDriverException)).*(NullPointerException|IllegalStateException|RuntimeException).*$",
+    "matchedStatuses": ["failed", "broken"]
+  }
+]

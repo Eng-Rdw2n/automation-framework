@@ -1,0 +1,42 @@
+[
+  {
+    "type": "validLogin",
+    "description": "Log in with a valid email and password",
+    "userId": "standardUser"
+  },
+  {
+    "type": "wrongCombination",
+    "description": "Reject login with an incorrect password",
+    "userId": "standardUser",
+    "password": "WrongPassword",
+    "expectedResult": "Your email or password is incorrect!"
+  },
+  {
+    "type": "wrongCombination",
+    "description": "Reject login with an incorrect email",
+    "userId": "standardUser",
+    "email": "wrongemail@example.com",
+    "expectedResult": "Your email or password is incorrect!"
+  },
+  {
+    "type": "emptyField",
+    "description": "Reject login without an email",
+    "userId": "standardUser",
+    "email": "",
+    "expectedResult": "Please fill out this field."
+  },
+  {
+    "type": "emptyField",
+    "description": "Reject login without a password",
+    "userId": "standardUser",
+    "password": "",
+    "expectedResult": "Please fill out this field."
+  },
+  {
+    "type": "edgeCase",
+    "description": "Handle an unusually long login email",
+    "userId": "standardUser",
+    "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@test.com",
+    "expectedResult": "Your email or password is incorrect!"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "type": "validReview",
+    "description": "Submit a product review with valid data",
+    "productId": "menTshirt",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "review": "This is a great product!",
+    "expectedResult": "Thank you for your review.",
+    "expectedValidationMessage": "Please fill out this field."
+  },
+  {
+    "type": "invalidEmail",
+    "description": "Reject a product review with an invalid email",
+    "productId": "menTshirt",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "invalid-email",
+    "review": "This review must reject an invalid email format."
+  },
+  {
+    "type": "missingEmail",
+    "description": "Reject a product review without an email",
+    "productId": "menTshirt",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "",
+    "review": "This review requires an email.",
+    "expectedValidationMessage": "Please fill out this field."
+  },
+  {
+    "type": "missingReviewText",
+    "description": "Reject a product review without review text",
+    "productId": "menTshirt",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "review": "",
+    "expectedValidationMessage": "Please fill out this field."
+  }
+]

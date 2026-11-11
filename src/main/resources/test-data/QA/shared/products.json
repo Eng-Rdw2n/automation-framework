@@ -1,0 +1,23 @@
+[
+  {
+    "id": "iphone13",
+    "name": "iPhone 13",
+    "searchKeyword": "iPhone 13"
+  },
+  {
+    "id": "menTshirt",
+    "name": "GRAPHIC DESIGN MEN T SHIRT - BLUE",
+    "searchKeyword": "Men T Shirt",
+    "category": "Men",
+    "subCategory": "Tshirts",
+    "brand": "Mast & Harbour"
+  },
+  {
+    "id": "sleevelessDress",
+    "name": "Sleeveless Dress",
+    "searchKeyword": "Sleeveless Dress",
+    "category": "Women",
+    "subCategory": "Dress",
+    "brand": "Madame"
+  }
+]

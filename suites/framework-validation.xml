@@ -1,0 +1,19 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!-- Framework reliability checks after a real product-catalog action. -->
+<suite name="Framework Validation Suite" verbose="1" parallel="none">
+
+    <listeners>
+        <listener class-name="com.radwanalbunni.automation.core.listeners.TestListener"/>
+        <listener class-name="com.radwanalbunni.automation.core.listeners.AnnotationTransformer"/>
+    </listeners>
+
+    <test name="Retry, Capture, and Failure Classification">
+
+        <classes>
+            <class name="com.radwanalbunni.tests.validation.FrameworkValidationTest"/>
+        </classes>
+
+    </test>
+
+</suite>

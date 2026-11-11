@@ -1,0 +1,43 @@
+[
+  {
+    "type": "validLogin",
+    "description": "Verify login with valid API credentials",
+    "userId": "standardUser",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 200,
+    "expectedResult": "User exists!"
+  },
+  {
+    "type": "wrongCombination",
+    "description": "Reject API login with an incorrect password",
+    "userId": "standardUser",
+    "password": "WrongPassword",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 404,
+    "expectedResult": "User not found!"
+  },
+  {
+    "type": "emptyField",
+    "description": "Reject API login without an email",
+    "userId": "standardUser",
+    "email": "",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 400,
+    "expectedResult": "Bad request, email or password parameter is missing in POST request."
+  },
+  {
+    "type": "missingPassword",
+    "description": "Reject API login without a password",
+    "userId": "standardUser",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 400,
+    "expectedResult": "Bad request, email or password parameter is missing in POST request."
+  },
+  {
+    "type": "unsupportedDelete",
+    "description": "Reject an unsupported DELETE request to the login endpoint",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 405,
+    "expectedResult": "This request method is not supported."
+  }
+]

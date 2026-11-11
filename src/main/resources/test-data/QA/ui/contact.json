@@ -1,0 +1,33 @@
+[
+  {
+    "type": "validContactSubmission",
+    "description": "Submit the contact form with a file attachment",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "subject": "Test Subject",
+    "message": "Test message",
+    "filePath": "test-files/img.png",
+    "expectedResult": "Success! Your details have been submitted successfully.",
+    "expectedValidationMessage": "Please fill out this field."
+  },
+  {
+    "type": "invalidEmail",
+    "description": "Reject the contact form with an invalid email",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "invalid-email",
+    "subject": "Validation test",
+    "message": "This form must reject an invalid email format."
+  },
+  {
+    "type": "validWithoutAttachment",
+    "description": "Submit the contact form without a file attachment",
+    "userId": "standardUser",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "subject": "Contact without attachment",
+    "message": "A contact request should not require a file.",
+    "expectedResult": "Success! Your details have been submitted successfully."
+  }
+]

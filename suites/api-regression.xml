@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.1.dtd">
+
+<!-- Up to two independent API test classes run together. -->
+<suite name="API Regression Suite" parallel="classes" thread-count="2" data-provider-thread-count="1">
+
+    <listeners>
+        <listener class-name="com.radwanalbunni.automation.core.listeners.TestListener"/>
+        <listener class-name="com.radwanalbunni.automation.core.listeners.AnnotationTransformer"/>
+    </listeners>
+
+    <test name="API regression">
+        <classes>
+            <class name="com.radwanalbunni.tests.api.LoginApiTest"/>
+            <class name="com.radwanalbunni.tests.api.ProductsApiTest"/>
+            <class name="com.radwanalbunni.tests.api.SearchApiTest"/>
+            <class name="com.radwanalbunni.tests.api.BrandsApiTest"/>
+            <class name="com.radwanalbunni.tests.api.RegistrationApiTest"/>
+            <class name="com.radwanalbunni.tests.api.AccountApiTest"/>
+        </classes>
+    </test>
+</suite>

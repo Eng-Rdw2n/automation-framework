@@ -1,0 +1,47 @@
+[
+  {
+    "type": "validCheckout",
+    "description": "Complete checkout and validate the downloaded invoice",
+    "productIds": [
+      "menTshirt",
+      "sleevelessDress"
+    ],
+    "quantities": [
+      2,
+      1
+    ],
+    "paymentCardId": "ValidVisaCard",
+    "comment": "Leave it in front of the door",
+    "expectedResult": "Congratulations! Your order has been confirmed!",
+    "expectedValidationMessage": "Please fill out this field.",
+    "expectedInvoiceContent": "Your total purchase amount is 3778"
+  },
+  {
+    "type": "missingCardNumber",
+    "description": "Reject checkout without a card number",
+    "productIds": [
+      "menTshirt"
+    ],
+    "quantities": [
+      1
+    ],
+    "paymentCardId": "ValidVisaCard",
+    "number": "",
+    "comment": "Validate required card number",
+    "expectedValidationMessage": "Please fill out this field."
+  },
+  {
+    "type": "missingCvv",
+    "description": "Reject checkout without a card security code",
+    "productIds": [
+      "menTshirt"
+    ],
+    "quantities": [
+      1
+    ],
+    "paymentCardId": "ValidVisaCard",
+    "cvv": "",
+    "comment": "Validate required card CVV",
+    "expectedValidationMessage": "Please fill out this field."
+  }
+]

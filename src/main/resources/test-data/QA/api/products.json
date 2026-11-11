@@ -1,0 +1,36 @@
+[
+  {
+    "type": "getAllProducts",
+    "description": "Get the complete product list",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 200
+  },
+  {
+    "type": "unsupportedPost",
+    "description": "Reject an unsupported POST request to the product list endpoint",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 405,
+    "expectedResult": "This request method is not supported."
+  },
+  {
+    "type": "validSearch",
+    "description": "Search for products using a valid keyword",
+    "searchProduct": "tshirt",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 200
+  },
+  {
+    "type": "missingSearchParameter",
+    "description": "Reject a product search without the required parameter",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 400,
+    "expectedResult": "Bad request, search_product parameter is missing in POST request."
+  },
+  {
+    "type": "searchNoResults",
+    "description": "Return an empty product list for an unknown keyword",
+    "searchProduct": "no-such-product-automation-test",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 200
+  }
+]

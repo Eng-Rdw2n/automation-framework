@@ -1,0 +1,25 @@
+[
+  {
+    "type": "searchByKeyword",
+    "description": "Find a product using the search bar",
+    "productId": "menTshirt",
+    "expectedResult": "GRAPHIC DESIGN MEN T SHIRT - BLUE"
+  },
+  {
+    "type": "searchByCategory",
+    "description": "Find products using a category",
+    "productId": "sleevelessDress",
+    "expectedResult": "Sleeveless Dress"
+  },
+  {
+    "type": "searchByBrand",
+    "description": "Find products using a brand",
+    "productId": "menTshirt",
+    "expectedResult": "GRAPHIC DESIGN MEN T SHIRT - BLUE"
+  },
+  {
+    "type": "searchNoResults",
+    "description": "Show no products for an unknown search keyword",
+    "searchKeyword": "no-such-product-automation-test"
+  }
+]

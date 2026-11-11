@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Appenders>
+        <!-- Console: compact -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %C{1} - %msg%n"/>
+        </Console>
+
+        <!-- One file per test -->
+        <Routing name="TestRouting">
+            <Routes pattern="$${ctx:logFileName:-framework}">
+                <Route key="framework">
+                    <File name="Framework"
+                          fileName="${sys:user.dir}/target/logs/framework.log">
+                        <PatternLayout pattern="%d{HH:mm:ss} %-5level %C{1}.%M - %msg%n"/>
+                    </File>
+                </Route>
+                <Route>
+                    <File name="Test-${ctx:logFileName}"
+                          fileName="${sys:user.dir}/target/logs/${ctx:logFileName}.log">
+                        <PatternLayout pattern="%d{HH:mm:ss} %-5level %C{1}.%M - %msg%n"/>
+                    </File>
+                </Route>
+            </Routes>
+        </Routing>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="TestRouting"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

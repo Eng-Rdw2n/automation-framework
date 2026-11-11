@@ -1,0 +1,35 @@
+# Compiled classes
+*.class
+
+# Log files
+*.log
+logs/
+target/logs/
+
+# Maven build output
+target/
+
+# Allure results and reports (generated at runtime — not source code)
+.allure/
+allure-results/
+allure-report/
+
+# Screenshots (generated at runtime)
+test-output/
+
+# IDE files
+.idea/
+.idea-backup/
+*.iml
+*.iws
+.vscode/
+*.DS_Store
+
+# WebDriverManager cache
+.wdm/
+
+# OS artifacts
+Thumbs.db
+
+# Local agent instructions
+AGENTS.md

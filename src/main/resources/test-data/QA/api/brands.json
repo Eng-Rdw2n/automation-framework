@@ -1,0 +1,15 @@
+[
+  {
+    "type": "getAllBrands",
+    "description": "Get the complete brand list",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 200
+  },
+  {
+    "type": "unsupportedPut",
+    "description": "Reject an unsupported PUT request to the brand list endpoint",
+    "expectedHttpStatus": 200,
+    "expectedResponseCode": 405,
+    "expectedResult": "This request method is not supported."
+  }
+]

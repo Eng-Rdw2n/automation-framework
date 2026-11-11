@@ -1,0 +1,16 @@
+[
+  {
+    "type": "validSubscription",
+    "description": "Subscribe to the newsletter with a valid email",
+    "userId": "standardUser",
+    "email": "john.doe@example.com",
+    "expectedResult": "You have been successfully subscribed!",
+    "expectedValidationMessage": "Please fill out this field."
+  },
+  {
+    "type": "invalidEmail",
+    "description": "Reject newsletter subscription with an invalid email",
+    "userId": "standardUser",
+    "email": "invalid-email"
+  }
+]

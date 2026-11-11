@@ -1,0 +1,31 @@
+[
+  {
+    "type": "addAndRemoveProducts",
+    "description": "Add products with quantities and remove one product from the cart",
+    "productIds": [
+      "menTshirt",
+      "sleevelessDress"
+    ],
+    "quantities": [
+      2,
+      1
+    ],
+    "productsToRemoveIds": [
+      "menTshirt"
+    ]
+  },
+
+
+
+  {
+    "type": "checkoutRequiresLogin",
+    "description": "Require a guest user to log in before checkout",
+    "productIds": [
+      "menTshirt"
+    ],
+    "quantities": [
+      1
+    ],
+    "expectedResult": "Register / Login account to proceed on checkout."
+  }
+]

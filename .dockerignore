@@ -1,0 +1,20 @@
+# Version-control and editor files are not needed inside the test image.
+.git/
+.github/
+.idea/
+.vscode/
+.allure/
+*.iml
+.DS_Store
+
+# Maven output and test evidence are generated for each container run.
+target/
+test-output/
+allure-results/
+allure-report/
+screenshots/
+logs/
+*.log
+
+# Local WebDriverManager cache is host-specific and must not be copied.
+.wdm/
