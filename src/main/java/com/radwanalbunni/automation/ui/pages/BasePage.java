@@ -17,6 +17,7 @@ public class BasePage {
     private static final By EXTERNAL_SURVEY_CLOSE_BUTTON =
             By.xpath("//*[@role='dialog' or contains(concat(' ', normalize-space(@class), ' '), ' modal ')]"
                     + "//*[self::button or self::a][normalize-space()='Close']");
+    private static final By EXTERNAL_AD_CLOSE_TEXT = By.xpath("//*[normalize-space()='Close' and not(*)]");
 
     protected final WebDriver driver;
     protected final WaitUtils waitUtils;
@@ -173,6 +174,17 @@ public class BasePage {
                 if (closeButton.isDisplayed()) {
                     ((JavascriptExecutor) driver).executeScript("arguments[0].click();", closeButton);
                     log.info("[UI ACTION] Dismissed external survey overlay");
+                    return;
+                }
+            }
+            for (WebElement closeButton : driver.findElements(EXTERNAL_AD_CLOSE_TEXT)) {
+                Rectangle bounds = closeButton.getRect();
+                Dimension viewport = driver.manage().window().getSize();
+                if (closeButton.isDisplayed()
+                        && bounds.getX() >= viewport.getWidth() / 2
+                        && bounds.getY() <= viewport.getHeight() / 3) {
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", closeButton);
+                    log.info("[UI ACTION] Dismissed external advertisement overlay");
                     return;
                 }
             }
