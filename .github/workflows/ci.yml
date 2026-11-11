@@ -10,10 +10,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: smoke-report-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   smoke:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    outputs:
+      report_ready: ${{ steps.report.outputs.ready }}
 
     steps:
       - name: Get project code
@@ -29,6 +35,43 @@ jobs:
       - name: Run smoke suite
         run: mvn --batch-mode test -DsuiteXmlFile=suites/smoke.xml -Dbrowser=chrome -Dheadless=true
 
+      - name: Restore previous Allure history
+        if: ${{ always() && github.ref == 'refs/heads/main' }}
+        uses: actions/cache/restore@v5
+        with:
+          path: .allure-history
+          key: allure-history-${{ github.run_id }}
+          restore-keys: allure-history-
+
+      - name: Generate Allure report
+        id: report
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -d target/allure-results ] || [ -z "$(find target/allure-results -maxdepth 1 -name '*-result.json' -print -quit)" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "No Allure test results were produced."
+            exit 0
+          fi
+
+          if [ -d .allure-history ]; then
+            mkdir -p target/allure-results/history
+            cp -a .allure-history/. target/allure-results/history/
+          fi
+
+          mvn --batch-mode allure:report
+          test -f target/site/allure-maven-plugin/index.html
+          mkdir -p .allure-history
+          cp -a target/site/allure-maven-plugin/history/. .allure-history/
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Save Allure history for the next run
+        if: ${{ always() && steps.report.outputs.ready == 'true' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .allure-history
+          key: allure-history-${{ github.run_id }}
+
       - name: Save test evidence
         if: always()
         uses: actions/upload-artifact@v6
@@ -40,3 +83,65 @@ jobs:
             target/logs/
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Save readable Allure report
+        if: ${{ always() && steps.report.outputs.ready == 'true' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: allure-report
+          path: target/site/allure-maven-plugin/
+          retention-days: 7
+
+  publish:
+    needs: smoke
+    if: ${{ always() && needs.smoke.outputs.report_ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download Allure report
+        uses: actions/download-artifact@v6
+        with:
+          name: allure-report
+          path: site
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Prepare Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - name: Publish Allure report
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  notify:
+    needs: [smoke, publish]
+    if: ${{ always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Get notification script
+        uses: actions/checkout@v6
+
+      - name: Email stakeholder result when configured
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          REPORT_RECIPIENT: ${{ secrets.REPORT_RECIPIENT }}
+          REPORT_URL: ${{ needs.publish.outputs.page_url }}
+          RUN_RESULT: ${{ needs.smoke.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 .github/scripts/send_report.py

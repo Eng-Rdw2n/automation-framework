@@ -331,9 +331,9 @@ Each active UI thread owns its WebDriver and download location. Tests that chang
 
 The thread count can be increased when the test runner has enough CPU and memory and the target application or API can handle more concurrent traffic. Increase it gradually and monitor run time and failures: more threads do not always mean a faster or more stable run.
 
-### Planned CI and Stakeholder Reporting Flow
+### CI and Stakeholder Reporting Flow
 
-The next delivery step is GitHub Actions. It will run the selected suite on each change, preserve Allure results as build artifacts, and provide a shareable report link or stakeholder notification after the run. This is intentionally documented as planned until the workflow is implemented and verified.
+GitHub Actions runs the smoke suite on pushes to `main`, pull requests, and manual requests. It preserves raw evidence, generates an Allure report even when tests fail, and publishes the report on GitHub Pages after Pages is enabled. Later runs restore Allure history from the previous run. An optional email sends the result and links when the mail secrets are configured. See [CI reports and notifications](docs/ci-reporting.md) for setup and limits. The published report and email delivery still need a successful live verification.
 
 ## 6. Setup, Configuration, and Execution
 
@@ -348,7 +348,7 @@ The next delivery step is GitHub Actions. It will run the selected suite on each
 
 ### Framework Validation
 
-This suite tests the framework itself, rather than the website's behavior. It deliberately triggers selected failures to check retry decisions, failure classification, screenshots, logs, and Allure attachments. These expected failures make Maven report `BUILD FAILURE`; they do not mean the smoke or regression suites failed. Run this suite separately when reviewing framework behavior. It is not part of the default smoke or regression runs or the planned CI workflow.
+This suite tests the framework itself, rather than the website's behavior. It deliberately triggers selected failures to check retry decisions, failure classification, screenshots, logs, and Allure attachments. These expected failures make Maven report `BUILD FAILURE`; they do not mean the smoke or regression suites failed. Run this suite separately when reviewing framework behavior. It is not part of the default smoke or regression runs or the CI workflow.
 
 Run it with:
 
@@ -451,9 +451,8 @@ Until that evidence is captured, the commands in the previous section are the re
 
 ## 8. Future Work
 
-- Add GitHub Actions for automated smoke and regression execution.
-- Preserve Allure history between CI runs and publish a shareable report.
-- Send a concise stakeholder notification containing the execution result and report link.
+- Add separate CI execution for the regression suites when their runtime and target environment support it.
+- Verify GitHub Pages publication and stakeholder email delivery after the required repository settings and mail secrets are configured.
 - Add containerized Firefox execution or Selenium Grid only when Docker-based cross-browser coverage is required.
 - Add another environment only when its configuration and environment-specific test data are available.
 
