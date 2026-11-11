@@ -116,11 +116,6 @@ public class AccountPage extends BasePage {
         return getText(ACCOUNT_DELETED_MESSAGE);
     }
 
-    public boolean isAccountCreatedNow() {
-        return driver.findElements(ACCOUNT_CREATED_MESSAGE).stream()
-                .anyMatch(element -> element.isDisplayed());
-    }
-
     public String getAccountCreatedMessage() {
         return getText(ACCOUNT_CREATED_MESSAGE);
     }

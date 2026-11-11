@@ -4,9 +4,10 @@ import com.radwanalbunni.automation.assertions.UiAssertions;
 import com.radwanalbunni.automation.data.annotations.TestDataFile;
 import com.radwanalbunni.automation.data.annotations.TestDataType;
 import com.radwanalbunni.automation.core.base.UiBaseTest;
-import com.radwanalbunni.automation.core.driver.DriverFactory;
 import com.radwanalbunni.automation.data.models.domain.RegistrationDataModel;
+import com.radwanalbunni.automation.data.models.domain.UserDataModel;
 import com.radwanalbunni.automation.data.GenericDataProvider;
+import com.radwanalbunni.automation.data.factory.TestUserFactory;
 import com.radwanalbunni.automation.ui.components.Header;
 import com.radwanalbunni.automation.ui.pages.AccountPage;
 import io.qameta.allure.Description;
@@ -23,6 +24,8 @@ import org.testng.annotations.Test;
 @Feature("User Registration")
 public class RegistrationUiTest extends UiBaseTest {
 
+    private RegistrationDataModel accountToClean;
+
     @Story("Valid user registration")
     @Severity(SeverityLevel.CRITICAL)
     @TestDataType("validRegistration")
@@ -36,6 +39,7 @@ public class RegistrationUiTest extends UiBaseTest {
         accountPage.signup(data);
         accountPage.addAccountInfo(data);
         accountPage.fillAddressDetails(data);
+        accountToClean = data;
 
         UiAssertions.assertTextEquals(
                 accountPage.getAccountCreatedMessage(),
@@ -59,6 +63,7 @@ public class RegistrationUiTest extends UiBaseTest {
         accountPage.signup(data);
         accountPage.addAccountInfo(data);
         accountPage.fillAddressDetails(data);
+        accountToClean = data;
         header.navigateToHome();
         accountPage.deleteAccount();
 
@@ -67,6 +72,7 @@ public class RegistrationUiTest extends UiBaseTest {
                 data.getExpectedDeletionResult(),
                 "Account deletion confirmation message"
         );
+        accountToClean = null;
     }
 
     @Story("Registration with an existing email")
@@ -126,20 +132,19 @@ public class RegistrationUiTest extends UiBaseTest {
         );
     }
 
-    /**
-     * A successful registration ends on the Account Created page. From there, return home
-     * and delete the generated account so the public sandbox is not filled with test data.
-     */
     @AfterMethod(alwaysRun = true)
     public void deleteGeneratedAccount() {
-        if (!DriverFactory.isDriverActive()) {
+        if (accountToClean == null) {
             return;
         }
 
-        AccountPage accountPage = new AccountPage();
-        if (accountPage.isAccountCreatedNow()) {
-            new Header().navigateToHome();
-            accountPage.deleteAccount();
+        try {
+            UserDataModel user = new UserDataModel();
+            user.setEmail(accountToClean.getEmail());
+            user.setPassword(accountToClean.getPassword());
+            new TestUserFactory().deleteUser(user);
+        } finally {
+            accountToClean = null;
         }
     }
 
