@@ -18,6 +18,7 @@ public class BasePage {
             By.xpath("//*[@role='dialog' or contains(concat(' ', normalize-space(@class), ' '), ' modal ')]"
                     + "//*[self::button or self::a][normalize-space()='Close']");
     private static final By EXTERNAL_AD_CLOSE_TEXT = By.xpath("//*[normalize-space()='Close' and not(*)]");
+    private static final By GOOGLE_SURVEY_TEXT = By.xpath("//*[contains(normalize-space(), 'Powered by Google')]");
 
     protected final WebDriver driver;
     protected final WaitUtils waitUtils;
@@ -186,6 +187,24 @@ public class BasePage {
                     ((JavascriptExecutor) driver).executeScript("arguments[0].click();", closeButton);
                     log.info("[UI ACTION] Dismissed external advertisement overlay");
                     return;
+                }
+            }
+            for (WebElement frame : driver.findElements(By.tagName("iframe"))) {
+                try {
+                    driver.switchTo().frame(frame);
+                    if (!driver.findElements(GOOGLE_SURVEY_TEXT).isEmpty()) {
+                        for (WebElement closeButton : driver.findElements(EXTERNAL_AD_CLOSE_TEXT)) {
+                            if (closeButton.isDisplayed()) {
+                                closeButton.click();
+                                log.info("[UI ACTION] Dismissed Google survey inside iframe");
+                                return;
+                            }
+                        }
+                    }
+                } catch (WebDriverException exception) {
+                    log.debug("[UI CHECK] Survey frame was not actionable");
+                } finally {
+                    driver.switchTo().defaultContent();
                 }
             }
         } catch (WebDriverException exception) {

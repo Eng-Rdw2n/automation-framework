@@ -3,6 +3,7 @@ package com.radwanalbunni.automation.ui.components;
 import com.radwanalbunni.automation.ui.pages.BasePage;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 public class Header extends BasePage {
 
@@ -21,6 +22,13 @@ public class Header extends BasePage {
     @Step("Navigate to Products page")
     public void navigateToProducts() {
         click(PRODUCTS_LINK);
+        try {
+            waitUtils.waitForVisibility(By.id("search_product"));
+        } catch (TimeoutException exception) {
+            log.warn("[UI WARN] Products page did not open after click; current URL: {}. Retrying navigation once", driver.getCurrentUrl());
+            click(PRODUCTS_LINK);
+            waitUtils.waitForVisibility(By.id("search_product"));
+        }
     }
 
     @Step("Navigate to Cart page")
