@@ -56,6 +56,14 @@ public class ConfigReader {
         return Integer.parseInt(props.getProperty("retry.maxRetries", "2"));
     }
 
+    public String getRetryBackoffPageText() {
+        return props.getProperty("retry.backoffPageText", "").trim();
+    }
+
+    public int getRetryBackoffSeconds() {
+        return Integer.parseInt(props.getProperty("retry.backoffSeconds", "0"));
+    }
+
     public String getBrowser() {
         return runtimeValueOrProperty("browser", "chrome");
     }

@@ -249,7 +249,7 @@ The framework separates UI and API concerns while sharing configuration, data pr
 
 ### Retry, Failure Classification, and Evidence
 
-Each failed attempt passes through `FailureClassifier`. `RetryAnalyzer` retries only known temporary failures—timeouts, stale elements, intercepted clicks, socket timeouts, and connection failures—up to the configured limit. Assertions, missing elements, invalid selectors or arguments, session failures, generic WebDriver failures, and test-code errors stop without retrying. The Allure TestNG integration records the attempts and displays them in the test's Retries tab. When a test finally fails, `TestListener` attaches the failure type, test log, and—when a browser is active—a screenshot.
+Each failed attempt passes through `FailureClassifier`. `RetryAnalyzer` retries only known temporary failures—timeouts, stale elements, intercepted clicks, socket timeouts, and connection failures—up to the configured limit. If the current page contains the configured overload message, it waits briefly before retrying; other retries remain immediate. Assertions, missing elements, invalid selectors or arguments, session failures, generic WebDriver failures, and test-code errors stop without retrying. The Allure TestNG integration records the attempts and displays them in the test's Retries tab. When a test finally fails, `TestListener` attaches the failure type, test log, and—when a browser is active—a screenshot.
 
 ```text
                     ┌────────────────────┐
