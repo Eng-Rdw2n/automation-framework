@@ -2,6 +2,7 @@ package com.radwanalbunni.automation.ui.pages;
 
 import com.radwanalbunni.automation.data.models.domain.RegistrationDataModel;
 import com.radwanalbunni.automation.data.models.domain.UserDataModel;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
@@ -52,24 +53,25 @@ public class AccountPage extends BasePage {
     private static final By ACCOUNT_DELETED_MESSAGE = By.cssSelector("[data-qa='account-deleted']");
     private static final By ACCOUNT_CREATED_MESSAGE = By.cssSelector("[data-qa='account-created']");
 
-    @Step("Login with user credentials")
     public void login(UserDataModel data) {
         login(data.getEmail(), data.getPassword());
     }
 
     // Supports data models that resolve credentials into flat email/password fields.
-    @Step("Login with user credentials")
     public void login(String email, String password) {
-        type(LOGIN_EMAIL, email);
-        type(LOGIN_PASSWORD, password);
-        click(LOGIN_BUTTON);
+        Allure.step("Login with user credentials", () -> {
+            type(LOGIN_EMAIL, email);
+            type(LOGIN_PASSWORD, password);
+            click(LOGIN_BUTTON);
+        });
     }
 
-    @Step("Start account signup")
     public void signup(RegistrationDataModel data) {
-        type(SIGNUP_NAME, data.getName());
-        type(SIGNUP_EMAIL, data.getEmail());
-        click(SIGNUP_BUTTON);
+        Allure.step("Start account signup", () -> {
+            type(SIGNUP_NAME, data.getName());
+            type(SIGNUP_EMAIL, data.getEmail());
+            click(SIGNUP_BUTTON);
+        });
     }
 
     @Step("Logout")
@@ -82,34 +84,36 @@ public class AccountPage extends BasePage {
         click(DELETE_ACCOUNT_BUTTON);
     }
 
-    @Step("Fill account information")
     public void addAccountInfo(RegistrationDataModel data) {
-        if ("Mr".equalsIgnoreCase(data.getTitle())) {
-            click(TITLE_MR);
-        } else if ("Mrs".equalsIgnoreCase(data.getTitle())) {
-            click(TITLE_MRS);
-        }
-        type(SIGNUP_PASSWORD, data.getPassword());
-        selectByVisibleText(DAYS, data.getDay());
-        selectByVisibleText(MONTHS, data.getMonth());
-        selectByVisibleText(YEARS, data.getYear());
-        if (data.isNewsletter()) click(NEWSLETTER_CHECKBOX);
-        if (data.isOffers()) click(OFFERS_CHECKBOX);
+        Allure.step("Fill account information", () -> {
+            if ("Mr".equalsIgnoreCase(data.getTitle())) {
+                click(TITLE_MR);
+            } else if ("Mrs".equalsIgnoreCase(data.getTitle())) {
+                click(TITLE_MRS);
+            }
+            type(SIGNUP_PASSWORD, data.getPassword());
+            selectByVisibleText(DAYS, data.getDay());
+            selectByVisibleText(MONTHS, data.getMonth());
+            selectByVisibleText(YEARS, data.getYear());
+            if (data.isNewsletter()) click(NEWSLETTER_CHECKBOX);
+            if (data.isOffers()) click(OFFERS_CHECKBOX);
+        });
     }
 
-    @Step("Fill account address details")
     public void fillAddressDetails(RegistrationDataModel data) {
-        type(FIRST_NAME, data.getFirstname());
-        type(LAST_NAME, data.getLastname());
-        type(COMPANY, data.getCompany());
-        type(ADDRESS_1, data.getAddress1());
-        type(ADDRESS_2, data.getAddress2());
-        selectByVisibleText(COUNTRY_DROPDOWN, data.getCountry());
-        type(STATE, data.getState());
-        type(CITY, data.getCity());
-        type(ZIPCODE, data.getZipcode());
-        type(MOBILE_NUMBER, data.getMobileNumber());
-        click(CREATE_ACCOUNT_BUTTON);
+        Allure.step("Fill account address details", () -> {
+            type(FIRST_NAME, data.getFirstname());
+            type(LAST_NAME, data.getLastname());
+            type(COMPANY, data.getCompany());
+            type(ADDRESS_1, data.getAddress1());
+            type(ADDRESS_2, data.getAddress2());
+            selectByVisibleText(COUNTRY_DROPDOWN, data.getCountry());
+            type(STATE, data.getState());
+            type(CITY, data.getCity());
+            type(ZIPCODE, data.getZipcode());
+            type(MOBILE_NUMBER, data.getMobileNumber());
+            click(CREATE_ACCOUNT_BUTTON);
+        });
     }
 
     public String getAccountDeletedMessage() {

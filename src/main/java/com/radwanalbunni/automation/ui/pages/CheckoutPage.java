@@ -1,6 +1,7 @@
 package com.radwanalbunni.automation.ui.pages;
 
 import com.radwanalbunni.automation.data.models.domain.PaymentCardDataModel;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
@@ -23,9 +24,8 @@ public class CheckoutPage extends BasePage {
     private static final By DOWNLOAD_INVOICE_BUTTON = By.cssSelector("a[href*='/download_invoice/']");
 
 
-    @Step("Add comment on checkout")
     public void addCommentOnCheckout(String comment) {
-        type(ORDER_COMMENT_TEXTAREA, comment);
+        Allure.step("Add comment on checkout", () -> type(ORDER_COMMENT_TEXTAREA, comment));
     }
 
     @Step("Click Place Order Button")
@@ -33,14 +33,15 @@ public class CheckoutPage extends BasePage {
         click(PLACE_ORDER_BUTTON);
     }
 
-    @Step("Fill payment details")
     public void fillPaymentDetails(PaymentCardDataModel card) {
-        type(NAME_ON_CARD_FIELD, card.getName());
-        type(CARD_NUMBER_FIELD, card.getNumber());
-        type(CVC_FIELD, card.getCvv());
-        type(EXPIRY_MONTH_FIELD, card.getExpiryMonth());
-        type(EXPIRY_YEAR_FIELD, card.getExpiryYear());
-        click(PAY_AND_CONFIRM_ORDER_BUTTON);
+        Allure.step("Fill payment details", () -> {
+            type(NAME_ON_CARD_FIELD, card.getName());
+            type(CARD_NUMBER_FIELD, card.getNumber());
+            type(CVC_FIELD, card.getCvv());
+            type(EXPIRY_MONTH_FIELD, card.getExpiryMonth());
+            type(EXPIRY_YEAR_FIELD, card.getExpiryYear());
+            click(PAY_AND_CONFIRM_ORDER_BUTTON);
+        });
     }
 
     public void submitEmptyPaymentDetails() {

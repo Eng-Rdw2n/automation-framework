@@ -4,6 +4,7 @@ import com.radwanalbunni.automation.data.models.domain.ProductDataModel;
 import com.radwanalbunni.automation.data.models.domain.ReviewDataModel;
 import com.radwanalbunni.automation.data.models.domain.SearchDataModel;
 import com.radwanalbunni.automation.ui.components.Header;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
@@ -118,13 +119,14 @@ public class ProductsPage extends BasePage {
         click(CONTINUE_SHOPPING_BUTTON);
     }
 
-    @Step("Submit review for product")
     public void submitReview(ReviewDataModel data) {
-        openProductDetails(data.getProduct());
-        type(REVIEW_NAME_FIELD, data.getUser().getName());
-        type(REVIEW_EMAIL_FIELD, data.getUser().getEmail());
-        type(REVIEW_TEXTAREA, data.getReview());
-        click(REVIEW_SUBMIT_BUTTON);
+        Allure.step("Submit review for product", () -> {
+            openProductDetails(data.getProduct());
+            type(REVIEW_NAME_FIELD, data.getUser().getName());
+            type(REVIEW_EMAIL_FIELD, data.getUser().getEmail());
+            type(REVIEW_TEXTAREA, data.getReview());
+            click(REVIEW_SUBMIT_BUTTON);
+        });
     }
 
     @Step("Get product review result message")

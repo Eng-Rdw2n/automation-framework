@@ -15,13 +15,26 @@ import java.util.function.UnaryOperator;
 public final class ReferenceDataStore {
 
     public UserDataModel user(String id) {
-        return findById(
+        UserDataModel user = findById(
                 TestDataLoader.load("shared/users", UserDataModel.class),
                 id,
                 UserDataModel::getId,
                 UserDataModel::new,
                 "shared/users"
         );
+        if ("standardUser".equalsIgnoreCase(id)) {
+            user.setEmail(requiredEnvironmentVariable("TEST_STANDARD_USER_EMAIL"));
+            user.setPassword(requiredEnvironmentVariable("TEST_STANDARD_USER_PASSWORD"));
+        }
+        return user;
+    }
+
+    private String requiredEnvironmentVariable(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Set the " + name + " environment variable before running tests that use standardUser");
+        }
+        return value;
     }
 
     public ProductDataModel product(String id) {

@@ -1,7 +1,7 @@
 package com.radwanalbunni.automation.ui.pages;
 
 import com.radwanalbunni.automation.data.models.domain.ContactUsDataModel;
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
 import org.openqa.selenium.By;
 
 public class ContactUsPage extends BasePage {
@@ -15,12 +15,13 @@ public class ContactUsPage extends BasePage {
     private static final By SUBMIT_BUTTON = By.cssSelector("[data-qa='submit-button']");
     private static final By SUCCESS_MESSAGE = By.cssSelector("div.status.alert.alert-success");
 
-    @Step("Fill out and submit the contact form")
     public void fillContactForm(ContactUsDataModel data) {
-        enterContactDetails(data);
-        uploadFile(UPLOAD_FIELD, data.getFilePath());
-        click(SUBMIT_BUTTON);
-        acceptAlert();
+        Allure.step("Fill out and submit the contact form", () -> {
+            enterContactDetails(data);
+            uploadFile(UPLOAD_FIELD, data.getFilePath());
+            click(SUBMIT_BUTTON);
+            acceptAlert();
+        });
     }
 
     /**

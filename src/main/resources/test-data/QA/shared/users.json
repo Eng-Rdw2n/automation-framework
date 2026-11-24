@@ -1,8 +1,6 @@
 [
   {
     "id": "standardUser",
-    "name": "eng",
-    "email": "example@automatedTest.com",
-    "password": "Test@123"
+    "name": "eng"
   }
 ]

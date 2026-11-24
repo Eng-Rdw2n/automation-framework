@@ -27,11 +27,12 @@ public class AccountApiTest {
     @TestDataType("getUserDetail")
     @Test(dataProvider = "data", dataProviderClass = GenericDataProvider.class)
     public void testGetUserDetail(ApiScenarioDataModel data) {
-        UserDetailsResponse response = accountClient.getUserDetail(data.getEmail());
+        String email = data.getUser().getEmail();
+        UserDetailsResponse response = accountClient.getUserDetail(email);
 
         ApiAssertions.assertHttpStatus(response.getHttpStatus(), data.getExpectedHttpStatus());
         ApiAssertions.assertBodyResponseCode(response.getResponseCode(), data.getExpectedResponseCode());
-        ApiAssertions.assertFieldEquals(response.getUser().getEmail(), data.getEmail(), "user.email");
+        ApiAssertions.assertFieldEquals(response.getUser().getEmail(), email, "user.email");
     }
 
     @Story("Delete account")

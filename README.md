@@ -97,6 +97,9 @@ The framework separates UI and API concerns while sharing configuration, data pr
 .
 ├── .dockerignore
 ├── .gitignore
+├── .github/
+│   ├── scripts/send_report.py
+│   └── workflows/ci.yml
 ├── Dockerfile
 ├── pom.xml
 ├── README.md
@@ -105,6 +108,7 @@ The framework separates UI and API concerns while sharing configuration, data pr
 │   │   ├── OBS-001-guest-sees-account-deleted-message.md
 │   │   ├── BUG-002-guest-can-open-checkout-page.md
 │   │   └── bug-report-template.md
+│   ├── ci-reporting.md
 │   ├── images/use-case-diagram.png
 │   ├── system-analysis.md
 │   ├── test-cases.md
@@ -146,7 +150,7 @@ The framework separates UI and API concerns while sharing configuration, data pr
 │   │   │   ├── retry/
 │   │   │   │   ├── FailureClassifier.java
 │   │   │   │   ├── FailureType.java
-│   │   │   │   ├── RetryAnalyzer.java
+│   │   │   │   └── RetryAnalyzer.java
 │   │   │   └── screenshot/ScreenshotService.java
 │   │   ├── data/
 │   │   │   ├── annotations/
@@ -240,6 +244,7 @@ The framework separates UI and API concerns while sharing configuration, data pr
 └── suites/
     ├── api-regression.xml
     ├── framework-validation.xml
+    ├── full-regression.xml
     ├── smoke.xml
     └── ui-regression.xml
 ```
@@ -262,49 +267,46 @@ Each failed attempt passes through `FailureClassifier`. `RetryAnalyzer` retries 
                      ┌────────┴────────────┐
                      │                     │
        Permanent or test failure       Known temporary failure
-                     │                     │
-                     ↓                     ↓
-             ┌───────────────┐     ┌──────────────────┐
-             │ Stop: failed  │     │ Retries left?    │
-             └───────┬───────┘     └────────┬─────────┘
-                     │                yes   │   no
-                     │          ┌───────────┘    └──────────┐
-                     │          ↓                           ↓
-                     │   ┌───────────────┐         ┌────────────────┐
-                     │   │ Run again ↺   │         │ Final failure  │
-                     │   └───────────────┘         └───────┬────────┘
-                     │                                     ↓
-                     └─────────────────── Screenshot + log attached; Allure displays retries
+                     │                     ↓
+                     │             ┌──────────────────┐
+                     │             │ Retries left?    │←────────────────────────┐
+                     │             └────────┬─────────┘                         │
+                     │                no    │   yes                             │
+                     └──────────┐  ┌────────┘    └──────────┐                  │
+                                ↓  ↓                        ↓                  │
+                         ┌─────────────────┐        ┌─────────────┐            │
+                         │ Final failure   │        │ Run again ↺ │────────────┘
+                         └────────┬────────┘        └─────────────┘
+                                  ↓
+                 Screenshot + log attached; Allure displays retries
 ```
+
+Because the target site occasionally displays a `queue full` page under load, `RetryAnalyzer` waits for the configured delay before an allowed retry when that page is visible. Otherwise, it retries immediately. The overload page does not make a failure retryable by itself.
 
 The browser is closed by `UiBaseTest` after the listener has had a chance to capture the failure state.
 
 ### Test Data Flow
 
-The test method's annotations select a JSON file and scenario type. The method parameter tells the generic provider which model to create. Shared JSON stores reusable users, products, and cards. `DataProcessor` creates an isolated scenario copy, replaces dynamic values, and asks reference-aware models to load typed shared data through `ReferenceDataStore`.
+The test method's annotations select a JSON file and scenario type. The method parameter tells the generic provider which model to create. Shared JSON stores reusable users, products, and cards. The fixed test user's email and password are provided through environment variables, not JSON. `DataProcessor` creates an isolated scenario copy, replaces dynamic values, and asks reference-aware models to load typed shared data through `ReferenceDataStore`.
 
 ```text
-┌───────────────────┐     ┌────────────────────┐
-│ Scenario JSON     │     │ Shared JSON        │
-│ action + overrides│     │ users/products/cards│
-└─────────┬─────────┘     └──────────┬─────────┘
-          └────────────┬─────────────┘
-                       ↓
-             ┌─────────────────────┐
-             │ GenericDataProvider │  reads annotations + model type
-             └──────────┬──────────┘
-                        ↓
-             ┌─────────────────────┐
-             │ TestDataLoader      │  reads and caches JSON records
-             └──────────┬──────────┘
-                        ↓
-             ┌─────────────────────┐
-             │ DataProcessor       │  copies → fills dynamic values → resolves typed IDs
-             └──────────┬──────────┘
-                        ↓
-             ┌─────────────────────┐
-             │ Typed test method   │  receives its model object
-             └─────────────────────┘
+┌───────────────┐   ┌──────────┐   ┌─────────────────────┐   ┌──────┐
+│ Scenario JSON │ → │ Provider │ → │ Copy + prepare data │ → │ Test │
+└───────────────┘   └──────────┘   └──────────↑──────────┘   └──────┘
+                                              │
+┌─────────────┐   ┌────────────────────┐       │
+│ Shared JSON │ → │ ReferenceDataStore │ ──────┘
+└─────────────┘   └─────────↑──────────┘
+                            │
+                 ┌──────────────────────────┐
+                 │ User credentials from    │
+                 │ environment variables    │
+                 └──────────────────────────┘
+
+┌───────────────────────────┐   ┌──────┐   ┌─────────┐
+│ New account when needed   │ → │ Test │ → │ Cleanup │
+│ created by user factory   │   └──────┘   └─────────┘
+└───────────────────────────┘
 ```
 
 For example, another invalid-login input can usually be added to `ui/login.json` and handled by the existing login test/model/provider. A new model is only needed when a feature needs a different data shape.
@@ -333,7 +335,7 @@ The thread count can be increased when the test runner has enough CPU and memory
 
 ### CI and Stakeholder Reporting Flow
 
-GitHub Actions runs the smoke suite on pushes to `main`, pull requests, and manual requests. It preserves raw evidence, generates an Allure report even when tests fail, and publishes the report on GitHub Pages after Pages is enabled. Later runs restore Allure history from the previous run. An optional email sends the result and links when the mail secrets are configured. See [CI reports and notifications](docs/ci-reporting.md) for setup and limits. The published report and email delivery still need a successful live verification.
+The workflow runs smoke on pushes to `main`, same-repository pull requests, and every Monday morning in the UAE. Manual runs can choose smoke or full regression; the latter runs API and UI tests in one report. The workflow preserves raw evidence, generates an Allure report even when tests fail, and publishes it on GitHub Pages. Runs on `main` keep separate Allure history branches for smoke and full regression so their trends do not mix. With mail secrets configured, it sends an email every second scheduled Monday or when **Send a test email after this manual run** is selected. Pushes do not send email. Fork pull requests cannot access test account secrets and are skipped. See [CI reports and notifications](docs/ci-reporting.md) for setup and limits. The new history storage and email delivery still need a live run on GitHub.
 
 ## 6. Setup, Configuration, and Execution
 
@@ -344,6 +346,7 @@ GitHub Actions runs the smoke suite on pushes to `main`, pull requests, and manu
 | `smoke.xml` | Critical UI and API checks | API and UI blocks run in parallel |
 | `ui-regression.xml` | Full UI coverage | Parallel by class, up to 2 threads |
 | `api-regression.xml` | Full API coverage | Parallel by class, up to 2 threads |
+| `full-regression.xml` | Combined API and UI regression in one Allure report | API block then UI block, sequentially |
 | `framework-validation.xml` | Checks the framework's retry, failure classification, screenshot, log, and Allure behavior | Run separately on demand |
 
 ### Framework Validation
@@ -362,6 +365,8 @@ Check the console and `target/logs` for retry and test logs. In Allure, check th
 
 Prerequisites: Java 21, Maven, and Chrome or Firefox. Docker is optional.
 
+Tests that use the fixed `standardUser` account read `TEST_STANDARD_USER_EMAIL` and `TEST_STANDARD_USER_PASSWORD` from the test process environment. Create a local `.env.local` file with these two names and your own values; the file is ignored by Git. In IntelliJ, open **Run → Edit Configurations**, select the TestNG or Maven configuration used to run the suite, and choose `.env.local` in **Environment variables → Browse for .env files and scripts**. Keep that configuration private. For terminal runs in zsh, run `set -a; source .env.local; set +a` before the Maven commands below. Do not put credentials in JSON, Maven arguments, or a committed file.
+
 ```bash
 # Default: QA smoke suite in Chrome
 mvn test
@@ -375,9 +380,13 @@ mvn test -DsuiteXmlFile=suites/ui-regression.xml -Dheadless=true
 # Full API regression
 mvn test -DsuiteXmlFile=suites/api-regression.xml
 
+# Combined API and UI regression in one report
+mvn test -DsuiteXmlFile=suites/full-regression.xml -Dheadless=true
+
 # Firefox smoke suite
 mvn test -Dbrowser=firefox -Dheadless=true
 ```
+
 ### Run with Docker
 
 ```bash
@@ -386,17 +395,20 @@ docker build -t automation-framework:local .
 
 # Default: run the headless smoke suite and keep results on the host
 docker run --rm --shm-size=2g \
+  --env TEST_STANDARD_USER_EMAIL --env TEST_STANDARD_USER_PASSWORD \
   -v "$PWD/target:/app/target" \
   automation-framework:local
 
 # Run the UI regression suite
 docker run --rm --shm-size=2g \
+  --env TEST_STANDARD_USER_EMAIL --env TEST_STANDARD_USER_PASSWORD \
   -v "$PWD/target:/app/target" \
   automation-framework:local \
   -DsuiteXmlFile=suites/ui-regression.xml
 
 # Run the API regression suite
 docker run --rm --shm-size=2g \
+  --env TEST_STANDARD_USER_EMAIL --env TEST_STANDARD_USER_PASSWORD \
   -v "$PWD/target:/app/target" \
   automation-framework:local \
   -DsuiteXmlFile=suites/api-regression.xml
@@ -451,11 +463,11 @@ Until that evidence is captured, the commands in the previous section are the re
 
 ## 8. Future Work
 
-- Add separate CI execution for the regression suites when their runtime and target environment support it.
-- Verify GitHub Pages publication and stakeholder email delivery after the required repository settings and mail secrets are configured.
+- Schedule full regression in CI when the public test site can run it reliably.
+- Verify the new Allure history branch and stakeholder email delivery in a live CI run.
 - Add containerized Firefox execution or Selenium Grid only when Docker-based cross-browser coverage is required.
 - Add another environment only when its configuration and environment-specific test data are available.
 
 ## Notes
 
-This framework targets a public sandbox. Credentials are test-only data. In a production project, credentials would come from environment variables or a secrets manager and would never be committed to source control.
+The framework targets a public sandbox. For GitHub Actions, add `TEST_STANDARD_USER_EMAIL` and `TEST_STANDARD_USER_PASSWORD` as repository secrets under **Settings → Secrets and variables → Actions**. Generated test accounts are created separately by the framework.

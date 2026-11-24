@@ -1,4 +1,4 @@
-name: Smoke Tests
+name: Test Automation
 
 on:
   push:
@@ -6,20 +6,35 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Test suite to run
+        type: choice
+        options: [smoke, full-regression]
+        default: smoke
+      email_report:
+        description: Send a test email after this manual run
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 9 * * 1'
+      timezone: Asia/Dubai
 
 permissions:
   contents: read
 
 concurrency:
-  group: smoke-report-${{ github.ref }}
+  group: test-report-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  smoke:
+  tests:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     outputs:
       report_ready: ${{ steps.report.outputs.ready }}
+      suite_name: ${{ steps.select_suite.outputs.name }}
 
     steps:
       - name: Get project code
@@ -32,16 +47,46 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run smoke suite
-        run: mvn --batch-mode test -DsuiteXmlFile=suites/smoke.xml -Dbrowser=chrome -Dheadless=true
+      - name: Select test suite
+        id: select_suite
+        env:
+          REQUESTED_SUITE: ${{ inputs.suite || 'smoke' }}
+        run: |
+          case "$REQUESTED_SUITE" in
+            smoke|full-regression) echo "name=$REQUESTED_SUITE" >> "$GITHUB_OUTPUT" ;;
+            *) echo "Unknown test suite: $REQUESTED_SUITE" >&2; exit 1 ;;
+          esac
+
+      - name: Run selected suite
+        env:
+          TEST_STANDARD_USER_EMAIL: ${{ secrets.TEST_STANDARD_USER_EMAIL }}
+          TEST_STANDARD_USER_PASSWORD: ${{ secrets.TEST_STANDARD_USER_PASSWORD }}
+          SELECTED_SUITE: ${{ steps.select_suite.outputs.name }}
+        run: mvn --batch-mode test -DsuiteXmlFile="suites/${SELECTED_SUITE}.xml" -Dbrowser=chrome -Dheadless=true
 
       - name: Restore previous Allure history
-        if: ${{ always() && github.ref == 'refs/heads/main' }}
-        uses: actions/cache/restore@v5
-        with:
-          path: .allure-history
-          key: allure-history-${{ github.run_id }}
-          restore-keys: allure-history-
+        if: ${{ always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        shell: bash
+        env:
+          SELECTED_SUITE: ${{ steps.select_suite.outputs.name }}
+        run: |
+          if [ "$SELECTED_SUITE" = "full-regression" ]; then
+            history_branch=allure-history-full-regression
+          else
+            history_branch=allure-history
+          fi
+          set +e
+          git ls-remote --exit-code --heads origin "$history_branch" >/dev/null
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            git fetch --depth=1 origin "$history_branch"
+            mkdir -p .allure-history
+            git archive FETCH_HEAD | tar -x -C .allure-history
+          elif [ "$status" -ne 2 ]; then
+            echo "Could not check the Allure history branch."
+            exit "$status"
+          fi
 
       - name: Generate Allure report
         id: report
@@ -61,22 +106,21 @@ jobs:
 
           mvn --batch-mode allure:report
           test -f target/site/allure-maven-plugin/index.html
-          mkdir -p .allure-history
-          cp -a target/site/allure-maven-plugin/history/. .allure-history/
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
-      - name: Save Allure history for the next run
-        if: ${{ always() && steps.report.outputs.ready == 'true' && github.ref == 'refs/heads/main' }}
-        uses: actions/cache/save@v5
+      - name: Transfer Allure history to the save job
+        if: ${{ always() && steps.report.outputs.ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v6
         with:
-          path: .allure-history
-          key: allure-history-${{ github.run_id }}
+          name: allure-history
+          path: target/site/allure-maven-plugin/history/
+          retention-days: 1
 
       - name: Save test evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: smoke-evidence
+          name: test-evidence
           path: |
             target/allure-results/
             target/surefire-reports/
@@ -92,9 +136,58 @@ jobs:
           path: target/site/allure-maven-plugin/
           retention-days: 7
 
+  save_history:
+    needs: tests
+    if: ${{ always() && needs.tests.outputs.report_ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Get repository for history branch
+        uses: actions/checkout@v6
+
+      - name: Download Allure history
+        uses: actions/download-artifact@v6
+        with:
+          name: allure-history
+          path: ${{ runner.temp }}/allure-history
+
+      - name: Save latest history on its own branch
+        shell: bash
+        env:
+          SELECTED_SUITE: ${{ needs.tests.outputs.suite_name }}
+        run: |
+          if [ "$SELECTED_SUITE" = "full-regression" ]; then
+            history_branch=allure-history-full-regression
+          else
+            history_branch=allure-history
+          fi
+          set +e
+          git ls-remote --exit-code --heads origin "$history_branch" >/dev/null
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            git fetch origin "$history_branch"
+            git switch -C "$history_branch" FETCH_HEAD
+          elif [ "$status" -eq 2 ]; then
+            git switch --orphan "$history_branch"
+          else
+            echo "Could not check the Allure history branch."
+            exit "$status"
+          fi
+          cp "$RUNNER_TEMP"/allure-history/*.json .
+          git add -A
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                commit -m 'Update Allure history'
+            git push origin "HEAD:$history_branch"
+          fi
+
   publish:
-    needs: smoke
-    if: ${{ always() && needs.smoke.outputs.report_ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    needs: tests
+    if: ${{ always() && needs.tests.outputs.report_ready == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -126,15 +219,40 @@ jobs:
         uses: actions/deploy-pages@v5
 
   notify:
-    needs: [smoke, publish]
-    if: ${{ always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    needs: [tests, save_history, publish]
+    if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.email_report)) }}
     runs-on: ubuntu-24.04
 
     steps:
       - name: Get notification script
         uses: actions/checkout@v6
 
-      - name: Email stakeholder result when configured
+      - name: Check whether the two-week email is due
+        id: due
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          from datetime import date, datetime, timezone
+          from os import environ
+
+          first_report = date(2026, 11, 23)
+          today = datetime.now(timezone.utc).date()
+          send = environ['EVENT_NAME'] == 'workflow_dispatch' or ((today - first_report).days // 7) % 2 == 0
+          with open(environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f"send={str(send).lower()}\n")
+          PY
+
+      - name: Download report summary
+        if: ${{ steps.due.outputs.send == 'true' && needs.tests.outputs.report_ready == 'true' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v6
+        with:
+          name: allure-report
+          path: site
+
+      - name: Email result when configured
+        if: ${{ steps.due.outputs.send == 'true' }}
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -142,6 +260,9 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           REPORT_RECIPIENT: ${{ secrets.REPORT_RECIPIENT }}
           REPORT_URL: ${{ needs.publish.outputs.page_url }}
-          RUN_RESULT: ${{ needs.smoke.result }}
+          RUN_RESULT: ${{ needs.tests.result }}
+          SUITE_NAME: ${{ needs.tests.outputs.suite_name }}
+          PUBLISH_RESULT: ${{ needs.publish.result }}
+          HISTORY_RESULT: ${{ needs.save_history.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 .github/scripts/send_report.py

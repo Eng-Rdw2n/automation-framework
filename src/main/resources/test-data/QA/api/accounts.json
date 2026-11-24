@@ -2,8 +2,8 @@
   {
     "type": "getUserDetail",
     "description": "Get account details using a registered email",
-    "email": "example@automatedTest.com",
     "expectedHttpStatus": 200,
-    "expectedResponseCode": 200
+    "expectedResponseCode": 200,
+    "userId": "standardUser"
   }
 ]

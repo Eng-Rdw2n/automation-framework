@@ -2,6 +2,7 @@ package com.radwanalbunni.automation.ui.components;
 
 import com.radwanalbunni.automation.ui.pages.BasePage;
 import com.radwanalbunni.automation.data.models.domain.UserDataModel;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 
@@ -18,15 +19,15 @@ public class Footer extends BasePage {
     private static final By SUBSCRIPTION_SUCCESS_MESSAGE =
             By.cssSelector("div.alert-success.alert");
 
-    @Step("Subscribe to newsletter with user email")
     public void subscribe(UserDataModel data) {
         subscribe(data.getEmail());
     }
 
-    @Step("Subscribe to newsletter")
     public void subscribe(String email) {
-        type(EMAIL_INPUT, email);
-        click(SUBSCRIBE_BUTTON);
+        Allure.step("Subscribe to newsletter", () -> {
+            type(EMAIL_INPUT, email);
+            click(SUBSCRIBE_BUTTON);
+        });
     }
 
     @Step("Get subscription result message")

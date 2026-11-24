@@ -7,18 +7,19 @@ import com.radwanalbunni.automation.ui.pages.AccountPage;
 import com.radwanalbunni.automation.ui.pages.CartPage;
 import com.radwanalbunni.automation.ui.pages.CheckoutPage;
 import com.radwanalbunni.automation.ui.pages.ProductsPage;
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
 
 /**
  * Reusable journey that creates an order across the Login, Products, Cart, and Checkout pages.
  */
 public class CheckoutFlow {
 
-    @Step("Complete checkout journey")
     public CheckoutPage placeOrder(UserDataModel user, CheckoutDataModel data) {
-        CheckoutPage checkoutPage = reachPaymentPage(user, data);
-        checkoutPage.fillPaymentDetails(data.getPaymentCard());
-        return checkoutPage;
+        return Allure.step("Complete checkout journey", () -> {
+            CheckoutPage checkoutPage = reachPaymentPage(user, data);
+            checkoutPage.fillPaymentDetails(data.getPaymentCard());
+            return checkoutPage;
+        });
     }
 
     /**

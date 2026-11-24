@@ -33,3 +33,6 @@ Thumbs.db
 
 # Local agent instructions
 AGENTS.md
+
+# Local test account credentials
+.env.local
